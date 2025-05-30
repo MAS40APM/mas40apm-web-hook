@@ -15,22 +15,31 @@ def send_message(chat_id, text):
 @app.route('/', methods=['POST'])
 def webhook():
     data = request.get_json()
-    print("✅ تم استقبال طلب POST من Telegram")
+    print("✅ Received raw JSON:")
+    print(data)  # 👈 هذا السطر مهم جدًا لرؤية كل ما تستقبله من Telegram
 
     if 'message' in data and 'photo' in data['message']:
-        print("📸 تم العثور على صورة داخل الرسالة")
+        print("🖼 صورة تم التقاطها من Telegram")
 
         chat_id = data['message']['chat']['id']
         photo_list = data['message']['photo']
         file_id = photo_list[-1]['file_id']
 
-        # Get file path
         file_info = requests.get(f"{API_URL}/getFile?file_id={file_id}").json()
         file_path = file_info['result']['file_path']
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
-        # Placeholder MAS40APM Report
         report = f"""
+📊 MAS40APM Snapshot Report  
+🖼 Chart: {file_url}
+"""
+
+        send_message(chat_id, report.strip())
+        return "✅ Done", 200
+    else:
+        print("⚠️ لا توجد صورة في الرسالة")
+        return "No photo found", 200
+
 MAS40APM
 Frame: M15
 Level: 3295
