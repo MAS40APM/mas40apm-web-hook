@@ -6,8 +6,8 @@ from datetime import datetime
 app = Flask(__name__)
 
 # === إعدادات البوت ===
-TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'  # ← استبدله بالتوكن الخاص بك
-CHAT_ID = '2111124289'  # ← تأكد من أنه صحيح
+TELEGRAM_BOT_TOKEN = '7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE'
+CHAT_ID = '2111124289'  # ← هذا هو الـ Chat ID الخاص بك
 
 # === وظيفة إرسال رسالة لوج إلى Telegram ===
 def send_message_to_telegram(text):
