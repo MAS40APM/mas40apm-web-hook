@@ -1,67 +1,48 @@
 from flask import Flask, request
 import requests
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-BOT_TOKEN = "7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE"
-API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN'
+CHAT_ID = '2111124289'
+OPENAI_ENDPOINT = 'https://api.openai.com/v1/images'  # ← placeholder، عدل لاحقًا عند تمرير الصورة لـ ChatGPT
 
-def send_message(chat_id, text):
-    requests.post(f"{API_URL}/sendMessage", data={
-        "chat_id": chat_id,
-        "text": text
-    })
+def send_message_to_telegram(text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        'chat_id': CHAT_ID,
+        'text': text
+    }
+    requests.post(url, data=payload)
 
-@app.route("/", methods=["POST"])
-def webhook():
-    data = request.get_json()
-    print("✅ تم استقبال طلب POST من Telegram")
+@app.route('/', methods=['POST'])
+def receive_update():
+    if request.method == 'POST':
+        data = request.get_json()
 
-    if "message" in data and "photo" in data["message"]:
-        print("📩 تم التعرف على صورة داخل الرسالة")
+        if 'message' in data:
+            msg = data['message']
 
-        chat_id = data["message"]["chat"]["id"]
-        photo_list = data["message"]["photo"]
-        file_id = photo_list[-1]["file_id"]
+            # التأكد من وجود صورة
+            if 'photo' in msg:
+                file_id = msg['photo'][-1]['file_id']
+                caption = msg.get('caption', None)
 
-        # Get file path from Telegram
-        file_info = requests.get(f"{API_URL}/getFile?file_id={file_id}").json()
+                if caption is None:
+                    # توليد Caption افتراضي
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    caption = f"Frame: M15\nSymbol: XAUUSD\nTime: {timestamp}\nLogID: AUTO-TG"
 
-        if "result" in file_info:
-            file_path = file_info["result"]["file_path"]
-            file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
-            print(f"📷 تم استقبال صورة جديدة: {file_url}")
+                # إرسال اللوج كبداية
+                send_message_to_telegram(f"📤 Received Image with Caption:\n{caption}")
 
-            # MAS40APM Report Placeholder
-            report = f"""
-MAS40APM Report
-Frame: M15
-Level: 3295
-Mode: Live
+                # في هذا المكان يتم تمرير الصورة لتحليل MAS40APM لاحقًا (عند توفر endpoint أو آلية داخلية)
 
-1. Trend Analysis: Bullish tendency forming
-2. Resistance Zones: 3300 – 3307
-3. Support Zones: 3287 – 3290
-4. Execution Setup: Buy above 3296.5
-5. Momentum Score: 71%
-6. DXC Impact: Mild
-7. MFS News Impact: None
-8. Risk Score: 2.3%
-9. Suggested Lot: 0.35
-10. Confidence: 78%
-11. Reversal Probability: Low
-12. CSE-X: 65%
-13. Global AI Rank: Moderate Advantage
-14. Summary: Confirm buy if candle closes above 3296.5
+                return {'status': 'Image received and caption sent'}, 200
 
-[Chart Image]({file_url})
-"""
+        return {'status': 'No image found'}, 200
 
-            send_message(chat_id, report.strip())
-        else:
-            print("❌ لم يتم العثور على result في رد Telegram:", file_info)
+    return {'status': 'Method not allowed'}, 405
 
-    return "OK", 200
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
