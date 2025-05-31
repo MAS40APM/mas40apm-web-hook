@@ -1,55 +1,50 @@
-
-# MAS40APM Webhook Main Code (Simplified Example - Replace with Actual Logic)
-from flask import Flask, request
-import telegram
 import os
-from datetime import datetime
+import requests
+from flask import Flask, request
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
-CHAT_ID = "YOUR_CHAT_ID"
+MAS40APM_API_URL = "https://mas40apm-web-hook.onrender.com/analyze"
 
-bot = telegram.Bot(token=TELEGRAM_TOKEN)
+@app.route('/webhook', methods=['POST'])
+def telegram_webhook():
+    data = request.json
 
-def generate_report():
-    # Placeholder for MAS40APM logic
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    report = f'''
-MAS 40 APM Report - {now}
+    if 'message' in data and 'photo' in data['message']:
+        chat_id = data['message']['chat']['id']
+        file_id = data['message']['photo'][-1]['file_id']
+        file_path = get_file_path(file_id)
 
-1. Trend Analysis
-2. Resistance Zones
-3. Support Zones
-4. Execution Opportunities (Buy/Sell Setup)
-5. تقييم زخم الشمعة اللحظية
-6. ارتباط الحركة مع مؤشر الدولار (DXC)
-7. تحليل تأثير الأخبار (MFS)
-8. تقييم نسبة المخاطرة حسب وضوح الصفقة
-9. حجم الدخول المقترح (Lot Size)
-10. نسبة الثقة في الصفقة (Confidence Score)
-11. تقييم انعكاس الحركة اللحظي
-12. تحليل الوعي الجمعي (CSE-X)
-13. الموقع التنافسي للنظام (CIL)
-14. Executive Summary
-'''
-    return report
+        if file_path:
+            image_url = f"https://api.telegram.org/file/bot{os.getenv('BOT_TOKEN')}/{file_path}"
+            image_path = download_image(image_url)
+            report = analyze_image(image_path)
+            print("✅ MAS40APM Report:\n", report)
 
-@app.route('/analyze', methods=['POST'])
-def analyze():
-    file = request.files.get('photo')
-    if file:
-        file_path = f"temp_{datetime.now().strftime('%H%M%S')}.jpg"
-        file.save(file_path)
+    return 'OK'
 
-        report = generate_report()
+def get_file_path(file_id):
+    url = f"https://api.telegram.org/bot{os.getenv('BOT_TOKEN')}/getFile?file_id={file_id}"
+    response = requests.get(url)
+    response.raise_for_status()
+    result = response.json()
+    return result['result']['file_path']
 
-        bot.send_message(chat_id=CHAT_ID, text="✅ Image received and processed by MAS40APM")
-        bot.send_message(chat_id=CHAT_ID, text=report)
+def download_image(file_url):
+    response = requests.get(file_url)
+    response.raise_for_status()
+    image_path = 'temp_image.png'
+    with open(image_path, 'wb') as f:
+        f.write(response.content)
+    return image_path
 
-        os.remove(file_path)
-        return "Processed", 200
-    return "No file", 400
+def analyze_image(image_path):
+    with open(image_path, 'rb') as img_file:
+        files = {'image': img_file}
+        response = requests.post(MAS40APM_API_URL, files=files)
+        response.raise_for_status()
+        return response.text
 
-if __name__ == "__main__":
-    app.run()
+if __name__ == '__main__':
+    print("🚀 MAS40APM - Full Report Engine (Live)")
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
