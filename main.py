@@ -53,4 +53,5 @@ def send_message(chat_id, text):
     requests.post(url, data=payload)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=10000)
+
