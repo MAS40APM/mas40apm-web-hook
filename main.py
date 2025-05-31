@@ -1,71 +1,45 @@
-from flask import Flask, request
-import requests
-import os
+🔍 MAS40APM - Full Report (Dummy Test)
 
-app = Flask(__name__)
+1. 📈 Trend Analysis:
+Currently testing dummy report feature. No real trend data analyzed.
 
-# --- إعدادات التوكن والشات ID ---
-BOT_TOKEN = "7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE"
-CHAT_ID = "2111124289"
+2. 📊 Resistance Zones:
+- 1st Resistance: 3345.00
+- 2nd Resistance: 3358.50
 
-# --- مسار التحليل المباشر ---
-@app.route('/analyze', methods=['POST'])
-def analyze_image():
-    if 'image' not in request.files:
-        return '❌ No image found', 400
+3. 📉 Support Zones:
+- 1st Support: 3312.20
+- 2nd Support: 3295.80
 
-    image_file = request.files['image']
-    # تحليل الصورة: حالياً فقط إرجاع تأكيد بسيط
-    return "✅ Image received and processed by MAS40APM"
+4. 🎯 Execution Opportunities:
+No active entry setups. This is a dummy template.
 
-# --- Webhook Telegram ---
-@app.route('/webhook', methods=['POST'])
-def telegram_webhook():
-    data = request.json
+5. 🚀 تقييم زخم الشمعة اللحظية:
+Dummy momentum: 52% احتمال استمرار الحركة الصاعدة.
 
-    if 'message' in data and 'photo' in data['message']:
-        chat_id = data['message']['chat']['id']
-        file_id = data['message']['photo'][-1]['file_id']
+6. 💵 ارتباط الحركة مع مؤشر الدولار (DXC):
+Not evaluated (dummy report).
 
-        file_path = get_file_path(file_id)
-        if file_path:
-            image_url = f'https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}'
-            image_path = download_image(image_url)
-            report = analyze_locally(image_path)
-            send_message(chat_id, report)
+7. 📰 تحليل تأثير الأخبار (MFS):
+No news impact (dummy placeholder).
 
-    return 'OK'
+8. ⚠️ تقييم نسبة المخاطرة حسب وضوح الصفقة:
+Low risk assumed (demo context).
 
-# --- جلب المسار من Telegram ---
-def get_file_path(file_id):
-    url = f'https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}'
-    response = requests.get(url)
-    response.raise_for_status()
-    file_path = response.json()['result']['file_path']
-    return file_path
+9. 📦 حجم الدخول المقترح (Lot Size):
+0.01 (for testing purposes only)
 
-# --- تحميل الصورة إلى ملف مؤقت ---
-def download_image(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    with open('temp.png', 'wb') as f:
-        f.write(response.content)
-    return 'temp.png'
+10. ✅ نسبة الثقة في الصفقة (Confidence Score):
+N/A (dummy report)
 
-# --- تحليل الصورة محلياً (يرسلها إلى /analyze) ---
-def analyze_locally(image_path):
-    with open(image_path, 'rb') as img_file:
-        files = {'image': img_file}
-        response = requests.post("https://mas40apm-web-hook.onrender.com/analyze", files=files)
-        response.raise_for_status()
-        return response.text
+11. 🔄 تقييم انعكاس الحركة اللحظي:
+No reversal detected (demo only)
 
-# --- إرسال رسالة إلى التليجرام ---
-def send_message(chat_id, text):
-    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-    payload = {'chat_id': chat_id, 'text': text}
-    requests.post(url, data=payload)
+12. 🧠 تحليل الوعي الجمعي (CSE-X):
+Collective sentiment score: 64/100 (sample value)
 
-# --- تشغيل التطبيق ---
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
+13. ⚔️ الموقع التنافسي للنظام (CIL):
+System dummy score compared to others: Above average
+
+14. 📌 Executive Summary:
+This is a dummy response for testing Telegram → Webhook → MAS40APM → Telegram.
