@@ -1,54 +1,63 @@
+
 from flask import Flask, request
 import requests
 import os
-from datetime import datetime
 
 app = Flask(__name__)
 
-# === إعدادات البوت ===
-TELEGRAM_BOT_TOKEN = '7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE'
-CHAT_ID = '2111124289'  # ← هذا هو الـ Chat ID الخاص بك
+# === Configuration ===
+BOT_TOKEN = '7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE'
+MAS40APM_API_URL = 'https://mas40apm-openai-endpoint.onrender.com/analyze'  # Replace with actual MAS40APM endpoint
 
-# === وظيفة إرسال رسالة لوج إلى Telegram ===
-def send_message_to_telegram(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': CHAT_ID,
-        'text': text
-    }
+# === Telegram Webhook Endpoint ===
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.get_json()
+
+    if 'message' in data and 'photo' in data['message']:
+        chat_id = data['message']['chat']['id']
+        file_id = data['message']['photo'][-1]['file_id']
+
+        try:
+            file_path = get_file_path(file_id)
+            file_url = f'https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}'
+            image_path = download_image(file_url)
+            report = analyze_image(image_path)
+            send_message(chat_id, report)
+        except Exception as e:
+            send_message(chat_id, f'❌ Error: {str(e)}')
+
+    return 'OK'
+
+# === Helper to get file path from Telegram ===
+def get_file_path(file_id):
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}'
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()['result']['file_path']
+
+# === Download image to local temp path ===
+def download_image(file_url):
+    response = requests.get(file_url)
+    response.raise_for_status()
+    image_path = 'temp_image.png'
+    with open(image_path, 'wb') as f:
+        f.write(response.content)
+    return image_path
+
+# === Call MAS40APM to analyze the image ===
+def analyze_image(image_path):
+    with open(image_path, 'rb') as img_file:
+        files = {'image': img_file}
+        response = requests.post(MAS40APM_API_URL, files=files)
+        response.raise_for_status()
+        return response.text
+
+# === Send message to user ===
+def send_message(chat_id, text):
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+    payload = {'chat_id': chat_id, 'text': text}
     requests.post(url, data=payload)
 
-# === نقطة الاستقبال الرئيسية من Telegram Webhook ===
-@app.route('/', methods=['POST'])
-def receive_update():
-    if request.method == 'POST':
-        data = request.get_json()
-
-        if 'message' in data:
-            msg = data['message']
-
-            # تأكد من وجود صورة
-            if 'photo' in msg:
-                file_id = msg['photo'][-1]['file_id']
-                caption = msg.get('caption', None)
-
-                # إذا لم توجد Caption → توليد واحدة
-                if caption is None:
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    caption = f"Frame: M15\nSymbol: XAUUSD\nTime: {timestamp}\nLogID: AUTO-TG"
-
-                # إرسال Caption كـ Log
-                send_message_to_telegram(f"📤 Received Image\n\n{caption}")
-
-                # لاحقًا: يمكن هنا تمرير الصورة إلى MAS40APM أو أي API تحليلي
-
-                return {'status': 'Image received and caption sent'}, 200
-
-        return {'status': 'No image found in message'}, 200
-
-    return {'status': 'Method not allowed'}, 405
-
-# === تشغيل السيرفر مع فتح المنفذ المطلوب لـ Render ===
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run()
