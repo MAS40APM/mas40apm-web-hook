@@ -8,7 +8,8 @@ BOT_TOKEN = "7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE"
 CHAT_ID = "2111124289"
 MAS40APM_API_URL = "https://mas40apm-web-hook.onrender.com/analyze"
 
-@app.route('/', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
+
 def telegram_webhook():
     data = request.json
 
