@@ -1,45 +1,29 @@
-🔍 MAS40APM - Full Report (Dummy Test)
+from flask import Flask, request
+import requests
 
-1. 📈 Trend Analysis:
-Currently testing dummy report feature. No real trend data analyzed.
+app = Flask(__name__)
 
-2. 📊 Resistance Zones:
-- 1st Resistance: 3345.00
-- 2nd Resistance: 3358.50
+# MAS40APM - Full Report (Dummy Test)
 
-3. 📉 Support Zones:
-- 1st Support: 3312.20
-- 2nd Support: 3295.80
+BOT_TOKEN = "7979262260:AAGIlPy2bx8Vn1GGurY0Tox8YMze5Z9iAZE"
+CHAT_ID = "2111124289"
 
-4. 🎯 Execution Opportunities:
-No active entry setups. This is a dummy template.
+@app.route('/webhook', methods=['POST'])
+def telegram_webhook():
+    data = request.json
+    if 'message' in data and 'photo' in data['message']:
+        chat_id = data['message']['chat']['id']
+        send_message(chat_id, "✅ Image received and processed by MAS40APM\n\n📊 Dummy Test Report:\n\n1. Trend Analysis\n2. Resistance Zones\n3. Support Zones\n4. Execution Opportunities\n5. Momentum Snapshot\n6. DXY Correlation\n7. News Impact\n8. Risk Level\n9. Lot Size Suggestion\n10. Confidence Score\n11. Reversal Evaluation\n12. Crowd Sentiment\n13. System Benchmark\n14. Summary")
+    return "OK"
 
-5. 🚀 تقييم زخم الشمعة اللحظية:
-Dummy momentum: 52% احتمال استمرار الحركة الصاعدة.
+def send_message(chat_id, text):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        'chat_id': chat_id,
+        'text': text
+    }
+    requests.post(url, data=payload)
 
-6. 💵 ارتباط الحركة مع مؤشر الدولار (DXC):
-Not evaluated (dummy report).
-
-7. 📰 تحليل تأثير الأخبار (MFS):
-No news impact (dummy placeholder).
-
-8. ⚠️ تقييم نسبة المخاطرة حسب وضوح الصفقة:
-Low risk assumed (demo context).
-
-9. 📦 حجم الدخول المقترح (Lot Size):
-0.01 (for testing purposes only)
-
-10. ✅ نسبة الثقة في الصفقة (Confidence Score):
-N/A (dummy report)
-
-11. 🔄 تقييم انعكاس الحركة اللحظي:
-No reversal detected (demo only)
-
-12. 🧠 تحليل الوعي الجمعي (CSE-X):
-Collective sentiment score: 64/100 (sample value)
-
-13. ⚔️ الموقع التنافسي للنظام (CIL):
-System dummy score compared to others: Above average
-
-14. 📌 Executive Summary:
-This is a dummy response for testing Telegram → Webhook → MAS40APM → Telegram.
+if __name__ == '__main__':
+    import os
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
